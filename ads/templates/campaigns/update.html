@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Edit "{{ campaign['campaign_name'] }}"{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="campaign_name">Campaign name</label>
+    <input name="campaign_name" id="campaign_name"
+      value="{{ request.form['campaign_name'] or campaign['campaign_name'] }}" required>
+    <label for="start_date">Start date</label>
+    <input name="start_date" id="start_date" value="{{ request.form['start_date'] or campaign['start_date'] }}" required>
+    <label for="finish_date">Finish date</label>
+    <input name="finish_date" id="finish_date" value="{{ request.form['finish_date'] or campaign['finish_date']}}" required>
+    <input type="submit" value="Save">
+  </form>
+  <hr>
+  <form action="{{ url_for('campaigns.delete', id=campaign['campaign_id']) }}" method="post">
+    <input class="danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
+  </form>
+{% endblock %}

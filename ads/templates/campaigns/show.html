@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Campaigns{% endblock %}</h1>    
+{% endblock %}
+{% block content %}
+  <table>
+    <tr>
+      <td>Campaign ID</td>
+      <td>Campaign Name</td>
+      <td>Campaign author</td>      
+      <td>Start Date</td>
+      <td>Finish Date</td>
+      <td>Campaign Status</td>
+      <td>Edit</td>
+    </tr>          
+    <tr>
+      <td>{{ campaign['campaign_id'] }}</td>
+      <td>{{ campaign['campaign_name'] }}</td>
+      <td>{{ campaign['fname'] }} {{ campaign['lname'] }}</td>      
+      <td>{{ campaign['start_date'] }}</td>
+      <td>{{ campaign['finish_date'] }}</td>        
+      <td>{{ campaign['campaign_is_active'] }}</td>
+      <td>
+        {% if g.user['user_id'] == campaign['campaign_author'] %}
+        <a class="action" href="{{ url_for('campaigns.update', id=campaign['campaign_id']) }}">Edit</a>
+        {% endif %}
+      </td>
+    </tr>     
+    
+  </table>  
+{% endblock %}
+  	
+    

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Campaigns{% endblock %}</h1>
+    {% if g.user %}
+      <a class="action" href="{{ url_for('campaigns.create') }}">New</a>
+    {% endif %}
+{% endblock %}
+{% block content %}
+  <table>
+    <tr>
+      <td>Campaign ID</td>
+      <td>Campaign Name</td>
+      <td>Campaign Author</td>      
+      <td>Start Date</td>
+      <td>Finish Date</td>
+      <td>Campaign Status</td>      
+    </tr>
+    {% for campaign in campaigns %}       
+      <tr>
+        <td>{{ campaign['campaign_id'] }}</td>
+        <td>
+          <a class="action" href="{{ url_for('campaigns.show', id=campaign['campaign_id']) }}">{{ campaign['campaign_name'] }}</a>
+        </td>
+        <td>{{ campaign['fname']|title }} {{ campaign['lname']|title }}</td>        
+        <td>{{ campaign['start_date'] }}</td>
+        <td>{{ campaign['finish_date'] }}</td>        
+        <td>{{ campaign['campaign_is_active'] }}</td>        
+      </tr>
+      {% if not loop.last %}
+        <!-- <hr> -->
+      {% endif %}
+    {% endfor %}
+  </table>  
+{% endblock %}
+  	
+    
