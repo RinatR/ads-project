@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}New creative{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="creative_name">Creative Name</label>
+    <input name="creative_name" id="creative_name" value="{{ request.form['creative_name'] }}" required>
+    <label for="creative_width">Creative Width</label>
+    <input name="creative_width" id="creative_width" value="{{ request.form['creative_width'] }}" required>
+    <label for="creative_height">Creative Height</label>
+    <input name="creative_height" id="creative_height" value="{{ request.form['creative_height'] }}" required>
+    <label for="creative_html">Creative HTML code</label>
+    <textarea name="creative_html" id="creative_html" value="{{ request.form['creative_html'] }}" required> </textarea>
+    <label for="creative_link">Creative click link</label>
+    <input name="creative_link" id="creative_link" value="{{ request.form['creative_link'] }}" required>
+    <input type="submit" value="Save">
+  </form>
+{% endblock %}

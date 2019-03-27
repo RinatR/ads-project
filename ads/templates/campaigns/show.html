@@ -13,6 +13,7 @@
       <td>Finish Date</td>
       <td>Campaign Status</td>
       <td>Edit</td>
+      <td>Add creative</td>
     </tr>          
     <tr>
       <td>{{ campaign['campaign_id'] }}</td>
@@ -26,9 +27,37 @@
         <a class="action" href="{{ url_for('campaigns.update', id=campaign['campaign_id']) }}">Edit</a>
         {% endif %}
       </td>
-    </tr>     
-    
+      <td><a class="action" href="{{ url_for('campaigns.add_creative', id=campaign['campaign_id']) }}">Add</a></td>
+    </tr>    
   </table>  
+  <h1>Creatives of campaign</h1>
+  {% if creatives %}
+  <table>
+    <tr>
+      <td>Creative ID</td>
+      <td>Creative Name</td>
+      <td>Creative Width</td>      
+      <td>Creative Height</td>
+      <td>Creative HTML code</td>
+      <td>Creative link</td>
+      <td>Creative status</td>
+    </tr>
+    {% for creative in creatives %}            
+      <tr>
+        <td>{{ creative['banner_id'] }}</td>
+        <td><a class="action" href="{{ url_for('campaigns.show_creative', id=creative['banner_id']) }}">{{ creative['banner_name'] }}</a></td>
+        <td>{{ creative['banner_width'] }}</td>      
+        <td>{{ creative['banner_height'] }}</td>
+        <td>{{ creative['banner_html'] }}</td>        
+        <td>{{ creative['banner_link'] }}</td>
+        <td>{{ creative['banner_status'] }}</td>        
+      </tr>     
+    {% if not loop.last %}
+    
+    {% endif %}
+    {% endfor %}
+  </table> 
+  {% endif %} 
 {% endblock %}
   	
     

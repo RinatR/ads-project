@@ -25,10 +25,13 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
 table {
-	width: 100%;
+	max-width: 1000px;
 	border: 1px solid black;
 	border-collapse: collapse;
+	box-sizing: border-box;
 }
+
+
 
 table td {
 	padding: 10px;
