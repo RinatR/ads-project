@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{%block header%}
+      <h1 class="page-header">{% block title %}Creative statistics{% endblock %}</h1>
+  {%endblock%}
+{%block content%}
+
+  <div id="chart"></div>
+  <table id="table">
+    <tr>
+      <th onclick="sortTable(0)">Date</th>
+      <th onclick="sortTable(1)">Bids</th>
+      <th onclick="sortTable(2)">NURLs</th>
+      <th onclick="sortTable(3)">Impressions</th>
+      <th onclick="sortTable(4)">Clicks</th>
+      <th onclick="sortTable(5)">CTR</th>
+      <th onclick="sortTable(6)">Spent</th>
+    </tr>
+  </table>
+
+
+  <script>
+
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+
+    function drawChart() {
+
+      var data = google.visualization.arrayToDataTable([
+        ['Day', 'Impressions', 'Clicks'],
+        ['01.03',1585149,1172],
+        // ['02.03',1688774,1389],
+        ['03.03',1275065,1117],
+        // ['04.03',2664487,1535],
+        ['05.03',2585387,1835],
+        // ['06.03',3024500,2408],
+        ['07.03',2953756,2347],
+        // ['08.03',2316632,2050],
+        ['09.03',1775434,1084],
+        // ['10.03',1720507,1153],
+        ['11.03',2153069,1148],
+        // ['12.03',2762842,1644],
+        ['13.03',3037718,1991],
+        // ['14.03',2009660,1413],
+        ['15.03',2647228,2145],
+        // ['16.03',1603688,1511],
+        ['17.03',2296824,2354],
+        // ['18.03',2438485,1804],
+        ['19.03',3091322,2521],
+        // ['20.03',3331216,3260],
+        ['21.03',3398440,2571],
+        // ['22.03',4049872,2993],
+        ['23.03',3218938,2621],
+        // ['24.03',3427746,2981],
+        ['25.03',3574728,2622],
+        // ['26.03',4390286,3124],
+        ['27.03',4631895,3545],
+        // ['28.03',4345167,3474],
+        ['29.03',3538303,2889],
+        // ['30.03',3859529,3515],
+        ['31.03',3783719,3560]
+      ]);
+
+      var options = {
+        title: 'Campaign Performance',
+        height: 500,
+        curveType: 'function',
+        legend: { position: 'right' }
+      };
+
+      var chart = new google.visualization.LineChart(document.getElementById('chart'));
+
+      chart.draw(data, options);
+    }
+  </script>
+
+  <script>
+    window.onload = showCreativeStats();
+
+    function showCreativeStats() {
+      var creativeId = getCreativeId();
+      getCreativeStats(creativeId);
+    }
+
+    function getCreativeId() {
+      var path = window.location.pathname.split("/");
+      var creativeId = path[2];
+
+      return creativeId;
+    }
+
+    function getCreativeStats(creativeId) {
+
+      var xhr = new XMLHttpRequest();
+      url = "http://127.0.0.1:5000/creatives/" + creativeId + "/get_stats_creative";
+      xhr.open('GET', url, false);
+      xhr.send();
+
+      if (xhr.status != 200) {
+        alert( xhr.status + ': ' + xhr.statusText );
+      }
+      else {
+        var response = xhr.responseText;
+        stats= JSON.parse(response);
+        console.log(stats);
+        drawCreativeStats(stats);
+      }
+    }
+
+    function drawCreativeStats(stats) {
+      var table = document.getElementById("table");
+      var tr = [], td = [], a = [];
+      // stats.forEach(function(stats) {
+      //   tr = table.appendChild(document.createElement("tr"));
+      //   for(var i = 0; i < 7; i++) {
+      //     td[i] = tr.appendChild(document.createElement("td"));
+      //   }
+      //   var date = new Date(stats.date);
+      //   var day = date.getDate();
+      //   var month = date.getMonth() + 1;
+      //   var year = date.getFullYear();
+      //   td[0].innerHTML = year + "-" + month + "-" + day;
+      //   td[1].innerHTML = stats.bids;
+      //   td[2].innerHTML = stats.nurls;
+      //   td[3].innerHTML = stats.impressions;
+      //   td[4].innerHTML = stats.clicks;
+      //   td[5].innerHTML = stats.ctr;
+      //   td[6].innerHTML = stats.spent;
+      // })
+
+      for(var i = 0; i < stats.length-1; i++) {
+        tr = table.appendChild(document.createElement("tr"));
+        for(var y = 0; y < 7; y++) {
+          td[y] = tr.appendChild(document.createElement("td"));
+        }
+
+        var date = new Date(stats[i].date);
+        var day = date.getDate();
+        var month = date.getMonth() + 1;
+        var year = date.getFullYear();
+        td[0].innerHTML = year + "-" + month + "-" + day;
+        td[1].innerHTML = stats[i].bids;
+        td[2].innerHTML = stats[i].nurls;
+        td[3].innerHTML = stats[i].impressions;
+        td[4].innerHTML = stats[i].clicks;
+        td[5].innerHTML = stats[i].ctr;
+        td[6].innerHTML = stats[i].spent;
+      }
+      tr = table.appendChild(document.createElement("tr"));
+      for(var y = 0; y < 7; y++) {
+        td[y] = tr.appendChild(document.createElement("td"));
+        td[y].style.fontWeight = "bold";
+      }
+      td[0].innerHTML = "Total";
+      td[1].innerHTML = stats[stats.length-1].bid_sum;
+      td[2].innerHTML = stats[stats.length-1].nurl_sum;
+      td[3].innerHTML = stats[stats.length-1].imp_sum;
+      td[4].innerHTML = stats[stats.length-1].click_sum;
+      td[5].innerHTML = stats[stats.length-1].avg_ctr;
+      td[6].innerHTML = stats[stats.length-1].spent_sum;
+    }
+
+    function sortTable(n) {
+      var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+      table = document.getElementById("table");
+      switching = true;
+      // Set the sorting direction to ascending:
+      dir = "asc";
+      /* Make a loop that will continue until
+      no switching has been done: */
+      while (switching) {
+        // Start by saying: no switching is done:
+        switching = false;
+        rows = table.rows;
+        /* Loop through all table rows (except the
+        first, which contains table headers): */
+        for (i = 1; i < (rows.length - 1); i++) {
+          // Start by saying there should be no switching:
+          shouldSwitch = false;
+          /* Get the two elements you want to compare,
+          one from current row and one from the next: */
+          x = rows[i].getElementsByTagName("TD")[n];
+          y = rows[i + 1].getElementsByTagName("TD")[n];
+          /* Check if the two rows should switch place,
+          based on the direction, asc or desc: */
+          if (dir == "asc") {
+            if(n != 0) {
+              if (Number(x.innerHTML.toLowerCase()) > Number(y.innerHTML.toLowerCase())) {
+                // If so, mark as a switch and break the loop:
+                shouldSwitch = true;
+                break;
+              }
+            }
+            else {
+              if (new Date(x.innerHTML.toLowerCase()) > new Date(y.innerHTML.toLowerCase())) {
+                shouldSwitch = true;
+                break;
+              }
+            }
+          }
+          else if (dir == "desc") {
+
+            if(n!=0) {
+              if (Number(x.innerHTML.toLowerCase()) < Number(y.innerHTML.toLowerCase())) {
+              // If so, mark as a switch and break the loop:
+              shouldSwitch = true;
+              break;
+              }
+            }
+            else {
+              if (new Date(x.innerHTML.toLowerCase()) < new Date(y.innerHTML.toLowerCase())) {
+                shouldSwitch = true;
+                break;
+              }
+            }
+
+          }
+        }
+
+        if (shouldSwitch) {
+          /* If a switch has been marked, make the switch
+          and mark that a switch has been done: */
+          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+          switching = true;
+          // Each time a switch is done, increase this count by 1:
+          switchcount ++;
+        } else {
+          /* If no switching has been done AND the direction is "asc",
+          set the direction to "desc" and run the while loop again. */
+          if (switchcount == 0 && dir == "asc") {
+            dir = "desc";
+            switching = true;
+          }
+        }
+      }
+    }
+
+  </script>
+
+{%endblock%}
+
+
+
+

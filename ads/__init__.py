@@ -33,6 +33,9 @@ def create_app(test_config=None):
 
     from ads import campaigns
     app.register_blueprint(campaigns.bp)
+
+    from ads import creatives
+    app.register_blueprint(creatives.bp_cr)
     
 
     return app

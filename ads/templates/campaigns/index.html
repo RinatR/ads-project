@@ -1,37 +1,156 @@
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>{% block title %}Campaigns{% endblock %}</h1>
-    {% if g.user %}
-      <a class="action" href="{{ url_for('campaigns.create') }}">New campaign</a>
-    {% endif %}
-{% endblock %}
+
 {% block content %}
-  <table>
-    <tr>
-      <td>Campaign ID</td>
-      <td>Campaign Name</td>
-      <td>Campaign Author</td>      
-      <td>Start Date</td>
-      <td>Finish Date</td>
-      <td>Campaign Status</td>      
-    </tr>
-    {% for campaign in campaigns %}       
-      <tr>
-        <td>{{ campaign['campaign_id'] }}</td>
-        <td>
-          <a class="action" href="{{ url_for('campaigns.show', id=campaign['campaign_id']) }}">{{ campaign['campaign_name'] }}</a>
-        </td>
-        <td>{{ campaign['fname']|title }} {{ campaign['lname']|title }}</td>        
-        <td>{{ campaign['start_date'] }}</td>
-        <td>{{ campaign['finish_date'] }}</td>        
-        <td>{{ campaign['campaign_is_active'] }}</td>        
-      </tr>
-      {% if not loop.last %}
-        <!-- <hr> -->
-      {% endif %}
-    {% endfor %}
-  </table>  
+  <h1>Campaigns</h1>
+  {% if g.user %}
+      <a class="link" href="{{ url_for('campaigns.create') }}">New campaign</a>
+    {% endif %}
+
+<table id="table">
+  <tr>
+    <th onclick="sortTable(0)">Campaign ID</th>
+    <th onclick="sortTable(1)">Campaign Name</th>
+    <th>Campaign Author</th>
+    <th onclick="sortTable(3)">Start Date</th>
+    <th onclick="sortTable(4)">Finish Date</th>
+    <th>Campaign Status</th>
+  </tr>
+</table>
+<div class="pagination"></div>
+<script>
+
+  window.onload = getRowsCount();
+
+  function getRowsCount() {
+    var xhr = new XMLHttpRequest();
+    url = "http://127.0.0.1:5000/campaigns/stats/rows_count";
+    xhr.open('GET', url, false);
+    xhr.send();
+
+    if (xhr.status != 200) {
+      alert( xhr.status + ': ' + xhr.statusText );
+    }
+    else {
+      var response = xhr.responseText;
+
+      createPaginateButtons(response)
+    }
+  }
+  // функция используется для добавления кнопок-переключателей в пагинаторе
+  //  на вход принимает общее количество рекламных кампаний конкретного пользователя
+  //  на каждой странице пагинаторы будет выводиться по 20 кампаний
+  function createPaginateButtons(rows_count) {
+    var button_count = Math.ceil(rows_count / 10);
+    var pagination = document.getElementsByClassName("pagination")
+
+    for(var i = 0; i < button_count; i++) {
+      pagination[0].appendChild(document.createElement("button"));
+    }
+
+    var buttons = document.getElementsByTagName("button")
+
+    for(var i = 0; i < buttons.length; i++) {
+      buttons[i].innerHTML = i+1;
+      buttons[i].setAttribute("onclick", "getCampaigns("+ i +")");
+    }
+    getCampaigns(0);
+  }
+
+  function getCampaigns(page) {
+
+    var xhr = new XMLHttpRequest();
+    url = "http://127.0.0.1:5000/campaigns/stats/" + page;
+    xhr.open('GET', url, false);
+    xhr.send();
+
+    if (xhr.status != 200) {
+      alert( xhr.status + ': ' + xhr.statusText );
+    }
+    else {
+      var response = xhr.responseText;
+      campaigns = JSON.parse(response)
+      console.log(campaigns)
+      showCampaigns(campaigns);
+    }
+  }
+
+  function showCampaigns(campaigns) {
+    var table = document.getElementById("table");
+    var tr = [], td = [], a = [];
+    campaigns.forEach(function(campaign) {
+      tr = table.appendChild(document.createElement("tr"));
+      for(var i = 0; i < 6; i++) {
+        td[i] = tr.appendChild(document.createElement("td"));
+        if(i == 1)
+          a[i] = td[1].appendChild(document.createElement("a"));
+      }
+      a[1].setAttribute("href", campaign.id + "/show");
+      a[1].setAttribute("class", "link")
+      td[0].innerHTML = campaign.id;
+      a[1].innerHTML = campaign.camp_name;
+      td[2].innerHTML = campaign.camp_author;
+      td[3].innerHTML = campaign.start_date;
+      td[4].innerHTML = campaign.finish_date;
+      td[5].innerHTML = campaign.camp_status;
+    })
+  }
+
+  function sortTable(n) {
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("table");
+    switching = true;
+    // Set the sorting direction to ascending:
+    dir = "asc";
+    /* Make a loop that will continue until
+    no switching has been done: */
+    while (switching) {
+      // Start by saying: no switching is done:
+      switching = false;
+      rows = table.rows;
+      /* Loop through all table rows (except the
+      first, which contains table headers): */
+      for (i = 1; i < (rows.length - 1); i++) {
+        // Start by saying there should be no switching:
+        shouldSwitch = false;
+        /* Get the two elements you want to compare,
+        one from current row and one from the next: */
+        x = rows[i].getElementsByTagName("TD")[n];
+        y = rows[i + 1].getElementsByTagName("TD")[n];
+        /* Check if the two rows should switch place,
+        based on the direction, asc or desc: */
+        if (dir == "asc") {
+          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+            // If so, mark as a switch and break the loop:
+            shouldSwitch = true;
+            break;
+          }
+        } else if (dir == "desc") {
+          if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+            // If so, mark as a switch and break the loop:
+            shouldSwitch = true;
+            break;
+          }
+        }
+      }
+      if (shouldSwitch) {
+        /* If a switch has been marked, make the switch
+        and mark that a switch has been done: */
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+        // Each time a switch is done, increase this count by 1:
+        switchcount ++;
+      } else {
+        /* If no switching has been done AND the direction is "asc",
+        set the direction to "desc" and run the while loop again. */
+        if (switchcount == 0 && dir == "asc") {
+          dir = "desc";
+          switching = true;
+        }
+      }
+    }
+  }
+
+</script>
 {% endblock %}
-  	
-    
+

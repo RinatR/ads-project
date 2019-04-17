@@ -1,24 +1,47 @@
 <!doctype html>
-<title>{% block title %}{% endblock %} - Ads system</title>
+<title>{% block title %}{% endblock %} - RinAds system</title>
+<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link rel="stylesheet" href="{{ url_for('static', filename='normalize.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<nav>
-  <h1><a href="{{ url_for('campaigns.index') }}">Ads System</a></h1>
-  <ul>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<nav class="main-nav">
+  <div class="container">
     {% if g.user %}
-      <li><span>{{ g.user['fname'] }}</span>
-      <li><a href="{{ url_for('auth.logout') }}">Log Out</a>
-    {% else %}
-      <li><a href="{{ url_for('auth.register') }}">Register</a>
-      <li><a href="{{ url_for('auth.login') }}">Log In</a>
-    {% endif %}
-  </ul>
+        <h1 class="page-title"><a href="{{ url_for('campaigns.index') }}">RinAds System</a></h1>
+      {% else %}
+        <h1 class="page-title"><a href="{{ url_for('auth.login') }}">Ads System</a></h1>
+      {% endif %}
+
+    <ul class="main-nav__menu">
+      {% if g.user %}
+        <li>{{ g.user['fname']|title }}</li>
+        <li><a class="link" href="{{ url_for('auth.logout') }}">Log Out</a></li>
+
+      {% endif %}
+    </ul>
+  </div>
 </nav>
-<section class="content">
-  <header>
-    {% block header %}{% endblock %}
-  </header>
-  {% for message in get_flashed_messages() %}
-    <div class="flash">{{ message }}</div>
-  {% endfor %}
-  {% block content %}{% endblock %}
-</section>
+<main class="main-content">
+  <div class="container">
+    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+      {% if errors %}
+        {% for msg in errors%}
+          <div class="flash">{{msg}}</div>
+        {% endfor%}
+      {% else %}
+        {% for msg in get_flashed_messages()%}
+          <div class="flash flash--success">{{msg}}</div>
+        {%endfor%}
+      {% endif %}
+    {% endwith %}
+
+  {% block header %}
+  {% endblock %}
+  {% block content %}
+    {% block form_title %}
+    {% endblock %}
+  {% endblock %}
+  </div>
+</main>
+

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1 class="page-header">{% block title %}Creative Details{% endblock %}</h1>
+{% endblock %}
+{% block content %}
+  <table>
+    <tr>
+      <td>Creative ID</td>
+      <td>Creative Name</td>
+      <td>Creative Width</td>
+      <td>Creative Height</td>
+      <td>Creative preview</td>
+      <td>Creative link</td>
+    </tr>
+    <tr>
+      <td>{{ creative['banner_id'] }}</td>
+      <td>{{ creative['banner_name'] }}</td>
+      <td>{{ creative['banner_width']}}</td>
+      <td>{{ creative['banner_height']}}</td>
+      <td><iframe src="{{ file_path }}" width="240" height="400" frameborder="0"></iframe></td>
+      <td>{{ creative['banner_link'] }}</td>
+    </tr>
+  </table>
+  <div>
+
+  </div>
+{% endblock %}

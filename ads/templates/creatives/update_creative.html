@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+  <form class="form" method="post">
+    {% block form_title %}
+      <h1 class="form__title">Edit "{{ creative['banner_name'] }}"</h1>
+    {% endblock %}
+    <div class="form-group">
+      <label  class="form-group__label"for="creative_name">Creative Name</label>
+      <input class="form-group__input" name="creative_name" id="creative_name" value="{{ request.form['creative_name']  or creative['banner_name'] }}" required>
+    </div>
+    <div class="form-group">
+      <label class="form-group__label" for="creative_width">Creative Width</label>
+      <input class="form-group__input" name="creative_width" id="creative_width" value="{{ request.form['creative_width']  or creative['banner_width'] }}" required>
+    </div>
+    <div class="form-group">
+      <label  class="form-group__label"for="creative_height">Creative Height</label>
+      <input class="form-group__input" name="creative_height" id="creative_height" value="{{ request.form['creative_height']  or creative['banner_height']}}" required>
+    </div>
+    <div class="form-group">
+      <label  class="form-group__label" for="creative_html">Creative HTML</label>
+      <textarea class="form-group__textarea" name="creative_html" id="creative_html" required>{{ request.form['creative_html'] or creative['banner_html']}}</textarea>
+    </div>
+    <div class="form-group">
+      <label  class="form-group__label"for="creative_link">Creative Link</label>
+      <input class="form-group__input" name="creative_link" id="creative_link" value="{{ request.form['creative_link']  or creative['banner_link']}}" required>
+    </div>
+    <input class="button button--primary" type="submit" value="Save">
+  </form>
+  <form class="form form--delete" action="{{ url_for('creatives.delete', id=creative['banner_id']) }}" method="post">
+    <input class="button button--danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
+  </form>
+{% endblock %}
+
+
+

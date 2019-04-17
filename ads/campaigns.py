@@ -7,19 +7,24 @@ from ads.auth import login_required
 from ads.db import get_db
 import datetime
 import os
+from flask import jsonify
+from sqlite3 import Error
 
 bp = Blueprint('campaigns', __name__, url_prefix='/campaigns')
 
 
 @bp.route('/')
-def index():
-    db = get_db()
-    campaigns = db.execute(
-        'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname, start_date, finish_date, campaign_is_active'
-        ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id WHERE user_id=' + str(g.user['user_id'])        
-    ).fetchall()
-    return render_template('campaigns/index.html', campaigns=campaigns)
-
+def index():	
+	    db = get_db()
+	    campaigns = db.execute(
+	        'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname,' 
+	        'start_date, finish_date, campaign_is_active'
+	        ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id '
+	        'WHERE user_id=' + str(g.user['user_id']) + ' AND campaign_is_active=1 LIMIT 10'      
+	    ).fetchall()
+	    
+	    return render_template('campaigns/index.html', campaigns=campaigns)
+ 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
 def create():
@@ -44,9 +49,10 @@ def create():
         else:
             db = get_db()
             db.execute(
-                'INSERT INTO campaigns (campaign_name, start_date, finish_date, campaign_author, campaign_is_active)'
+                'INSERT INTO campaigns (campaign_name, start_date, finish_date,' 
+                'campaign_author, campaign_is_active)'
                 ' VALUES (?, ?, ?, ?, ?)',
-                (campaign_name, start_date, finish_date, g.user['user_id'], 0)
+                (campaign_name, start_date, finish_date, g.user['user_id'], 1)
             )
             db.commit()
             return redirect(url_for('campaigns.index'))
@@ -66,7 +72,8 @@ def validate_date(start_date, finish_date):
 
 def get_campaign(campaign_id, check_author = True):
 	campaign = get_db().execute(
-        'SELECT campaign_id, campaign_name, start_date, finish_date, campaign_author, campaign_is_active, u.user_id, u.fname, u.lname'
+        'SELECT campaign_id, campaign_name, start_date, finish_date,' 
+        'campaign_author, campaign_is_active, u.user_id, u.fname, u.lname'
         ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id'
         ' WHERE campaign_id = ?',(campaign_id,)).fetchone()
 
@@ -103,7 +110,8 @@ def update(id):
         else:
             db = get_db()
             db.execute(
-                'UPDATE campaigns SET campaign_name = ?, start_date = ?, finish_date = ?'
+                'UPDATE campaigns SET campaign_name = ?, start_date = ?,' 
+                'finish_date = ?'
                 ' WHERE campaign_id = ?',
                 (campaign_name, start_date,finish_date, id)
             )
@@ -117,23 +125,20 @@ def update(id):
 def delete(id):
     get_campaign(id)
     db = get_db()
-    db.execute('DELETE FROM campaigns WHERE campaign_id = ?', (id,))
+    # db.execute('DELETE FROM campaigns WHERE campaign_id = ?', (id,))
+    db.execute('UPDATE campaigns SET campaign_is_active=0' + 
+    	' WHERE campaign_id = ?', (id,))
     db.commit()
     return redirect(url_for('campaigns.index'))
 
 def get_creatives(campaign_id):
 	creatives = get_db().execute(
-        'SELECT banner_id, banner_name, banner_width, banner_height, banner_html, banner_link, banner_status, banner_parent_campaign_id'
-        ' FROM html_banners  WHERE banner_parent_campaign_id = ?',(campaign_id,)).fetchall()
+        'SELECT banner_id, banner_name, banner_width, banner_height, '
+        'banner_link, banner_status, banner_parent_campaign_id'
+        ' FROM html_banners  WHERE banner_parent_campaign_id = ?',
+        (campaign_id,)).fetchall()
 
 	return creatives
-
-def get_creative(creative_id):
-	creative = get_db().execute(
-        'SELECT banner_id, banner_name, banner_width, banner_height, banner_html, banner_link, banner_status, banner_parent_campaign_id'
-        ' FROM html_banners  WHERE banner_id = ?',(creative_id,)).fetchone()
-
-	return creative
 
 @bp.route('/<int:id>/show', methods=('GET', "POST"))
 @login_required
@@ -141,58 +146,61 @@ def show(id):
 	campaign = get_campaign(id)
 	creatives = get_creatives(id)
 	if creatives is not None:
-		return render_template('campaigns/show.html', campaign=campaign, creatives=creatives)
+		return render_template('campaigns/show.html', 
+			campaign=campaign, creatives=creatives)
 	else:
 		return render_template('campaigns/show.html', campaign=campaign)
 
+# получаем количество всех рекламных кампаний для конкретного юзера.
+# полученное число используется для пагинации
+@bp.route('/stats/rows_count', methods=('GET', "POST"))
+def get_rows_count():
+	db = get_db()
+	try:	
+		rows_count = db.execute(
+			'SELECT COUNT(*) count_rows FROM campaigns c JOIN users u '
+			'ON c.campaign_author = u.user_id WHERE user_id=' 
+			+ str(g.user['user_id']) +  ' AND campaign_is_active=1'
+			).fetchone()
 
-@bp.route('/<int:id>/add_creative', methods=('GET', "POST"))
-@login_required
-def add_creative(id):
+	except Error as e:
+		return e
 	
-	if request.method == 'POST':
-		creative_name = request.form['creative_name']
-		creative_width = int(request.form['creative_width'])       
-		creative_height = int(request.form['creative_height'])
-		creative_html = request.form['creative_html']
-		creative_link = request.form['creative_link']      
-		error = None
-
-		if not creative_name:
-		    error = 'Creative name is required.'
-		elif not creative_width:
-			error = 'Creative width is required'
-		elif not creative_height:
-			error = 'Creative height is required'
-		elif not creative_html:
-			error = 'Creative html code is required'
-		elif not creative_link:
-			error = 'Creative link is required'
-
-		if error is not None:
-		    flash(error)
-		else:
-			db = get_db()
-			db.execute(
-		    	'INSERT INTO html_banners (banner_name, banner_status, banner_width, banner_height, banner_html, banner_link, banner_parent_campaign_id)'
-		    	' VALUES (?, ?, ?, ?, ?, ?, ?)', (creative_name, 0,creative_width, creative_height, creative_html, creative_link, id))
-			db.commit()
-			create_html_file(creative_name, creative_html)
-			return redirect(url_for('campaigns.index'))
-
-	return render_template('campaigns/add_creative.html')
+	return str(rows_count[0])
 
 
-def create_html_file(file_name, file_content):
-	filepath =   os.getcwd() + "/" + "ads" + current_app.static_url_path
-	filename = filepath + "/" + file_name + ".html"
-	with open(filename, 'w') as f_obj:
-		f_obj.write(file_content)
-
-@bp.route('/<int:id>/show_creative', methods=('GET', "POST"))
-@login_required
-def show_creative(id):
-	creative = get_creative(id)
-	file_path = current_app.static_url_path + "/" + creative['banner_name'] + ".html"
+@bp.route('/stats/<int:page>', methods=('GET', "POST"))
+def get_stats(page):
 	
-	return render_template('campaigns/show_creative.html', creative=creative, file_path=file_path)
+	offset = page * 10
+	offset = str(offset)
+	db = get_db()
+	campaigns = db.execute(
+		'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname,' 
+    	'start_date, finish_date, campaign_is_active'
+        ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id '
+        'WHERE user_id=' + str(g.user['user_id']) + ' AND campaign_is_active=1 LIMIT 10 OFFSET ' + offset 
+		).fetchall()
+
+	statsList = []
+	for camp in campaigns:
+		campaigns_dict = {}
+		campaigns_dict['id'] = camp[0]
+		campaigns_dict['camp_name'] = camp[1]
+		campaigns_dict['camp_author'] = camp[3] + " " + camp[4]
+		campaigns_dict['start_date'] = camp[5]
+		campaigns_dict['finish_date'] = camp[6]
+		campaigns_dict['camp_status'] = camp[7]
+		# campaigns_dict['rows-count'] = rows_count
+		statsList.append(campaigns_dict)
+
+	response = jsonify(statsList)
+
+	return response
+
+
+  
+
+
+
+	
