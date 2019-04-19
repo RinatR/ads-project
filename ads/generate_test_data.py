@@ -27,43 +27,22 @@ def select_all_tasks(conn):
     :return:
     """
     cur = conn.cursor()
-    stats = cur.execute('SELECT * FROM  statistics WHERE banner_id=21').fetchall()     
+    campaign_id = 11497
+    stats = cur.execute('SELECT date, SUM(bids), SUM(impressions) FROM statistics WHERE banner_id IN (SELECT banner_id  FROM html_banners WHERE banner_parent_campaign_id ='+ str(campaign_id)+')' + ' GROUP BY date ').fetchall()     
                 
-    statsList = []
+    statsList = []    
     
-    sum_bids = []
-    sum_nurls = []
-    sum_imp = []
-    sum_clicks = []
-    sum_spent = []   
     
     
     for camp in stats:
        
         campaigns_dict = {}
-        campaigns_dict['banner_id'] = camp[0]
+        campaigns_dict['date'] = camp[0]
         campaigns_dict['bids'] = camp[1]   
-        sum_bids.append(camp[1])     
-        campaigns_dict['nurls'] = camp[2] 
-        sum_nurls.append(camp[2])
-        campaigns_dict['impressions'] = camp[3]
-        sum_imp.append(camp[3])
-        campaigns_dict['clicks'] = camp[4]
-        sum_clicks.append(camp[4])
-        campaigns_dict['spent'] = camp[5]
-        sum_spent.append(camp[5])
-        campaigns_dict['date'] = camp[6]
-        campaigns_dict['ctr'] = round((campaigns_dict['clicks'] / campaigns_dict['impressions']) * 100,2);
+        campaigns_dict['impression'] = camp[2]          
         statsList.append(campaigns_dict)
     
-    columnSum = {
-        'bid_sum': sum(sum_bids),
-        'nurl_sum': sum(sum_nurls),
-        'imp_sum': sum(sum_imp),
-        'click_sum': sum(sum_clicks),
-        'spent_sum': sum(sum_spent)
-    }
-    statsList.append(columnSum)
+    
         
     print(statsList)
 
@@ -97,42 +76,42 @@ def select_all_tasks(conn):
 	
 # 	return campaign
 
-# def insert_test_data(conn):
-#     rows_count = 0
-#     while rows_count < 31:
-#         result = init_test_data(rows_count)
+def insert_test_data(conn):
+    rows_count = 0
+    while rows_count < 31:
+        result = init_test_data(rows_count)
         
-#         banner_id = result['banner_id']
-#         date = result['date']
-#         bids = result['bids']
-#         impressions = result['impressions']
-#         nurls = result['nurls']
-#         clicks = result['clicks']
-#         spent = result['spent']
-#         cur = conn.cursor()
+        banner_id = result['banner_id']
+        date = result['date']
+        bids = result['bids']
+        impressions = result['impressions']
+        nurls = result['nurls']
+        clicks = result['clicks']
+        spent = result['spent']
+        cur = conn.cursor()
     
         
-#         cur.execute("INSERT INTO statistics (banner_id, date, bids, nurls,impressions, clicks,spent) VALUES (?, ?, ?, ?, ?, ?, ?)",(banner_id, date, bids, nurls, impressions, clicks, spent))
-#         rows_count = rows_count+1        
+        cur.execute("INSERT INTO statistics (banner_id, date, bids, nurls,impressions, clicks,spent) VALUES (?, ?, ?, ?, ?, ?, ?)",(banner_id, date, bids, nurls, impressions, clicks, spent))
+        rows_count = rows_count+1        
 
-# def init_test_data(item):
+def init_test_data(item):
     
-#     dates = ['2019-03-01','2019-03-02','2019-03-03','2019-03-04','2019-03-05','2019-03-06','2019-03-07','2019-03-08','2019-03-09','2019-03-10','2019-03-11',
-#     '2019-03-12','2019-03-13','2019-03-14','2019-03-15','2019-03-16','2019-03-17','2019-03-18','2019-03-19','2019-03-20','2019-03-21','2019-03-22','2019-03-23',
-#     '2019-03-24','2019-03-25','2019-03-26','2019-03-27','2019-03-28','2019-03-29','2019-03-30','2019-03-31']
-#     fake = Faker()
-#     stats = {}
-#     stats['banner_id'] = 21
-#     stats['date'] = dates[item]
-#     stats['bids'] = fake.pyint()
-#     stats['impressions'] = fake.pyint()
-#     stats['nurls'] = fake.pyint()
-#     stats['clicks'] = fake.pyint()
-#     stats['spent'] = fake.pyfloat(left_digits=4, right_digits=2, positive=True)
+    dates = ['2019-03-01','2019-03-02','2019-03-03','2019-03-04','2019-03-05','2019-03-06','2019-03-07','2019-03-08','2019-03-09','2019-03-10','2019-03-11',
+    '2019-03-12','2019-03-13','2019-03-14','2019-03-15','2019-03-16','2019-03-17','2019-03-18','2019-03-19','2019-03-20','2019-03-21','2019-03-22','2019-03-23',
+    '2019-03-24','2019-03-25','2019-03-26','2019-03-27','2019-03-28','2019-03-29','2019-03-30','2019-03-31']
+    fake = Faker()
+    stats = {}
+    stats['banner_id'] = 22
+    stats['date'] = dates[item]
+    stats['bids'] = fake.pyint()
+    stats['impressions'] = fake.pyint()
+    stats['nurls'] = fake.pyint()
+    stats['clicks'] = fake.pyint()
+    stats['spent'] = fake.pyfloat(left_digits=4, right_digits=2, positive=True)
     
     
     
-#     return stats
+    return stats
 
  
  

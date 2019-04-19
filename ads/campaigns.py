@@ -15,15 +15,15 @@ bp = Blueprint('campaigns', __name__, url_prefix='/campaigns')
 
 @bp.route('/')
 def index():	
-	    db = get_db()
-	    campaigns = db.execute(
-	        'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname,' 
-	        'start_date, finish_date, campaign_is_active'
-	        ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id '
-	        'WHERE user_id=' + str(g.user['user_id']) + ' AND campaign_is_active=1 LIMIT 10'      
-	    ).fetchall()
+	    # db = get_db()
+	    # campaigns = db.execute(
+	    #     'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname,' 
+	    #     'start_date, finish_date, campaign_is_active'
+	    #     ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id '
+	    #     'WHERE user_id=' + str(g.user['user_id']) + ' AND campaign_is_active=1 LIMIT 10'      
+	    # ).fetchall()
 	    
-	    return render_template('campaigns/index.html', campaigns=campaigns)
+	    return render_template('campaigns/index.html')
  
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
@@ -153,7 +153,7 @@ def show(id):
 
 # получаем количество всех рекламных кампаний для конкретного юзера.
 # полученное число используется для пагинации
-@bp.route('/stats/rows_count', methods=('GET', "POST"))
+@bp.route('/all/rows_count', methods=('GET', "POST"))
 def get_rows_count():
 	db = get_db()
 	try:	
@@ -169,38 +169,111 @@ def get_rows_count():
 	return str(rows_count[0])
 
 
-@bp.route('/stats/<int:page>', methods=('GET', "POST"))
+@bp.route('/all/<int:page>', methods=('GET', "POST"))
 def get_stats(page):
-	
-	offset = page * 10
-	offset = str(offset)
-	db = get_db()
-	campaigns = db.execute(
-		'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname,' 
-    	'start_date, finish_date, campaign_is_active'
+    
+    offset = page * 10
+    offset = str(offset)
+    db = get_db()
+    campaigns = db.execute(
+        'SELECT campaign_id, campaign_name, campaign_author, u.fname, u.lname,' 
+        'start_date, finish_date, campaign_is_active'
         ' FROM campaigns c JOIN users u ON c.campaign_author = u.user_id '
         'WHERE user_id=' + str(g.user['user_id']) + ' AND campaign_is_active=1 LIMIT 10 OFFSET ' + offset 
-		).fetchall()
+        ).fetchall()
 
-	statsList = []
-	for camp in campaigns:
-		campaigns_dict = {}
-		campaigns_dict['id'] = camp[0]
-		campaigns_dict['camp_name'] = camp[1]
-		campaigns_dict['camp_author'] = camp[3] + " " + camp[4]
-		campaigns_dict['start_date'] = camp[5]
-		campaigns_dict['finish_date'] = camp[6]
-		campaigns_dict['camp_status'] = camp[7]
-		# campaigns_dict['rows-count'] = rows_count
-		statsList.append(campaigns_dict)
+    statsList = []
+    for camp in campaigns:
+        campaigns_dict = {}
+        campaigns_dict['id'] = camp[0]
+        campaigns_dict['camp_name'] = camp[1]
+        campaigns_dict['camp_author'] = camp[3] + " " + camp[4]
+        campaigns_dict['start_date'] = camp[5]
+        campaigns_dict['finish_date'] = camp[6]
+        campaigns_dict['camp_status'] = camp[7]     
+        statsList.append(campaigns_dict)
 
-	response = jsonify(statsList)
+    response = jsonify(statsList)
 
-	return response
+    return response
+
+@bp.route('/<int:id>/campaign_stats', methods=('GET',))
+@login_required
+def show_stats(id):
+    return render_template('campaigns/statistics.html') 
+
+
+@bp.route('/<int:campaign_id>/stats', methods=('GET',))
+@login_required
+def get_campaign_stats(campaign_id):
+    '''  
+    метод используется для получения статистики рекламной кампании из БД
+    id  - идентификатор кре
+    в ответ возвращаем json со статистикой рекламной кампании
+    также считаем возвращаем итоговую сумму по полям: bids, nurls, impressions, 
+    clicks, spent и среднее значение поля ctr
+    '''
+    error = None
+    flag = is_campaign_exist(campaign_id)
+    if flag == True:    
+        db = get_db()
+        
+       
+        stats = db.execute('SELECT date, SUM(bids), SUM(impressions), SUM(clicks), SUM(nurls),SUM(spent) FROM statistics WHERE banner_id IN (SELECT banner_id  FROM html_banners WHERE banner_parent_campaign_id ='+ str(campaign_id)+')' + ' GROUP BY date ').fetchall()                
+        statsList = [] 
+        sum_bids = []
+        sum_nurls = []
+        sum_imp = []
+        sum_clicks = []
+        sum_spent = [] 
+        avg_ctr = []            
+    
+        for camp in stats:
+           
+            campaigns_dict = {}
+            campaigns_dict['date'] = camp[0]
+            campaigns_dict['bids'] = camp[1] 
+            sum_bids.append(camp[1])
+            campaigns_dict['impressions'] = camp[2] 
+            sum_imp.append(camp[2]) 
+            campaigns_dict['clicks'] = camp[3]
+            sum_clicks.append(camp[3])    
+            campaigns_dict['nurls'] = camp[4]
+            sum_nurls.append(camp[4])
+            campaigns_dict['spent'] = round(camp[5],2)
+            sum_spent.append(campaigns_dict['spent'])
+            campaigns_dict['ctr'] = round((campaigns_dict['clicks'] / campaigns_dict['impressions']) * 100,2);  
+            avg_ctr.append(campaigns_dict['ctr'])          
+            statsList.append(campaigns_dict)
+
+        columnSum = {
+            'bid_sum': sum(sum_bids),
+            'nurl_sum': sum(sum_nurls),
+            'imp_sum': sum(sum_imp),
+            'click_sum': sum(sum_clicks),
+            'spent_sum': round(sum(sum_spent)),
+            'avg_ctr': round(sum(avg_ctr)/len(avg_ctr),2)
+        }    
+        statsList.append(columnSum)
+        response = jsonify(statsList)
+        return response     
+    else:
+        error = 'Campaign is not exists.'
+        flash(error,"error")
+        return redirect(url_for('campaigns.index'))
+
+
+def is_campaign_exist(id):
+    db = get_db()
+    campaign_id = db.execute('SELECT campaign_id FROM  campaigns WHERE campaign_id=?', (id,)).fetchone()
+
+    if campaign_id != None:
+        return True
+    else:
+        return False
 
 
   
 
 
 
-	

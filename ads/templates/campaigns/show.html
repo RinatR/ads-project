@@ -24,7 +24,7 @@
         <a class="link" href="{{ url_for('campaigns.update', id=campaign['campaign_id']) }}" title="Edit campaign"><i class="fas fa-edit"></i></a>
         {% endif %}
       </td>
-      <td><a class="link" href="#" title="Statistics"><i class="fas fa-chart-line"></i></a></td>
+      <td><a class="link" href="{{ url_for('campaigns.show_stats', id=campaign['campaign_id']) }}" title="Statistics"><i class="fas fa-chart-line"></i></a></td>
     </tr>
   </table>
   <a class="link" href="{{ url_for('creatives.add_creative', id=campaign['campaign_id']) }}">Add creative</a>

@@ -132,9 +132,17 @@ def delete(id):
 def show_stats(id):
 	return render_template('creatives/statistics.html')	
 
+
 @bp_cr.route('/<int:id>/get_stats_creative', methods=('GET',))
 @login_required
 def get_stats(id):
+	'''  
+	метод используется для получения статистики креатива из БД
+	id  - идентификатор креатива
+	в ответ возвращаем json со статистикой 
+	также считаем возвращаем итоговую сумму по полям: bids, nurls, impressions, 
+	clicks, spent и среднее значение поля ctr
+	'''
 	error = None
 	flag = is_creative_exist(id)
 	if flag == True:	
@@ -142,20 +150,6 @@ def get_stats(id):
 		
 		stats = db.execute('SELECT * FROM  statistics WHERE banner_id=?', (id,)).fetchall()		
 				
-		statsList = []
-		
-		# for camp in stats:
-		# 	campaigns_dict = {}
-		# 	campaigns_dict['banner_id'] = camp[0]
-		# 	campaigns_dict['bids'] = camp[1]			
-		# 	campaigns_dict['nurls'] = camp[2] 
-		# 	campaigns_dict['impressions'] = camp[3]
-		# 	campaigns_dict['clicks'] = camp[4]
-		# 	campaigns_dict['spent'] = camp[5]
-		# 	campaigns_dict['date'] = camp[6]
-		# 	campaigns_dict['ctr'] = round((campaigns_dict['clicks'] / campaigns_dict['impressions']) * 100,2);
-		# 	statsList.append(campaigns_dict)
-
 		statsList = []    
 		sum_bids = []
 		sum_nurls = []
@@ -194,9 +188,7 @@ def get_stats(id):
 		statsList.append(columnSum)
 
 		response = jsonify(statsList)
-		return response
-
-		# return render_template('creatives/statistics.html', statistics=stats)
+		return response		
 	else:
 		error = 'Creative is not exists.'
 		flash(error,"error")

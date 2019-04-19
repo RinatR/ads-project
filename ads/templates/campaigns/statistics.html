@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {%block header%}
-      <h1 class="page-header">{% block title %}Creative statistics{% endblock %}</h1>
+      <h1 class="page-header">{% block title %}Campaign statistics{% endblock %}</h1>
   {%endblock%}
 {%block content%}
 
@@ -24,10 +24,10 @@
 
     function drawChart() {
 
-      var creativeId = getCreativeId();
+      var campaignId = getCampaignId();
       var flag = true;
-      var stats = getCreativeStats(creativeId, flag);
-      console.log(stats);
+      var stats = getCampaignStats(campaignId, flag);
+
 
       var datesList = []
       var dates = [];
@@ -44,7 +44,7 @@
 
         datesList.push( dates.slice(i, i+3))
       }
-      console.log(dates)
+
 
       var data = google.visualization.arrayToDataTable(datesList)
 
@@ -62,25 +62,25 @@
   </script>
 
   <script>
-    window.onload = showCreativeStats();
+    window.onload = showCampaignStats();
 
-    function showCreativeStats() {
-      var creativeId = getCreativeId();
+    function showCampaignStats() {
+      var campaignId = getCampaignId();
       var flag = false;
-      getCreativeStats(creativeId, flag);
+      getCampaignStats(campaignId, flag);
     }
 
-    function getCreativeId() {
+    function getCampaignId() {
       var path = window.location.pathname.split("/");
-      var creativeId = path[2];
-
-      return creativeId;
+      var campaignId = path[2];
+      console.log(campaignId)
+      return campaignId;
     }
 
-    function getCreativeStats(creativeId, flag) {
+    function getCampaignStats(campaignId, flag) {
 
       var xhr = new XMLHttpRequest();
-      url = "http://127.0.0.1:5000/creatives/" + creativeId + "/get_stats_creative";
+      url = "http://127.0.0.1:5000/campaigns/" + campaignId + "/stats";
       xhr.open('GET', url, false);
       xhr.send();
 
@@ -90,9 +90,9 @@
       else {
         var response = xhr.responseText;
         stats= JSON.parse(response);
-        // console.log(stats);
+        console.log(stats);
         if (flag == false) {
-          drawCreativeStats(stats);
+          drawCampaignStats(stats);
         }
         else {
           return stats;
@@ -100,7 +100,7 @@
       }
     }
 
-    function drawCreativeStats(stats) {
+    function drawCampaignStats(stats) {
       var table = document.getElementById("table");
       var tr = [], td = [], a = [];
 
@@ -218,7 +218,3 @@
 
 
 
-<!-- select date, SUM(bids), SUM(impressions) from statistics where banner_id
-IN (select banner_id  from html_banners hb inner join campaigns camp
-on hb.banner_parent_campaign_id = camp.campaign_id)
-group by date -->

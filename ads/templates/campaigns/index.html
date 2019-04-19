@@ -24,7 +24,7 @@
 
   function getRowsCount() {
     var xhr = new XMLHttpRequest();
-    url = "http://127.0.0.1:5000/campaigns/stats/rows_count";
+    url = "http://127.0.0.1:5000/campaigns/all/rows_count";
     xhr.open('GET', url, false);
     xhr.send();
 
@@ -60,7 +60,7 @@
   function getCampaigns(page) {
 
     var xhr = new XMLHttpRequest();
-    url = "http://127.0.0.1:5000/campaigns/stats/" + page;
+    url = "http://127.0.0.1:5000/campaigns/all/" + page;
     xhr.open('GET', url, false);
     xhr.send();
 
